@@ -1,6 +1,6 @@
 ###Steps
 
-    " 1. Define Network
+      1. Define Network
 
      2. Install Mariadb and run   - if you wish to user docker compose skip to step
 
@@ -10,9 +10,9 @@
 
      5. Add Drupal to the network
 
-     6. Log into drupal from your workstation and configure drupal to "
+     6. Log into drupal from your workstation and configure drupal to
 
-
+` 22 `
 
 ### Alternate installation method: Docker-composer
      
