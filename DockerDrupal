@@ -1,1 +1,207 @@
+###Steps
+
+    " 1. Define Network
+
+     2. Install Mariadb and run   - if you wish to user docker compose skip to step
+
+     3. Add Mariadb to the network
+
+     4. Install Drupal
+
+     5. Add Drupal to the network
+
+     6. Log into drupal from your workstation and configure drupal to "
+
+
+
+### Alternate installation method: Docker-composer
+     
+     1.  Define the network
+     8.  Create directory for yaml file
+     9.  Create yaml file
+     10.  Run Docker-compose.
+     6.  Configure Drupal to point to mariadb container  
+
+     Ssh into the docker server
+
+### 1. Define the network
+
+`docker network create drupalnet`
+
+`docker network inspect drupalne`
+
+    Note the IP range in the output of inspect
+
+### 2.  Mariadb command line installation
+
+`Docker pull mariadb`             - pull mariadb from hub.docker.com
+
+
+`docker run -d --name mariadbctr --network drupalnet \`     - network name should match what you did in previous step
+
+`-e MYSQL_DATABASE=drupal \`
+
+`-e MYSQL_USER=drupaluser \`
+
+`-e MYSQL_PASSWORD=mypassword \`
+
+`-e MYSQL_ROOT_PASSWORD=mypassword \`
+
+        `-p 3306:3306 \`
+
+        `mariadb`
+
+`docker ps`          - make sure mariadb is running
+
+Ensure mariadb is working by logging in via docker
+
+
+`Docker exec -it mariadbctr mysql -u root -p`
+
+The exec command is like a shell in the container
+
+        -it mariadbctr   means run in interactive mode
+
+            Then normal mysql login of mysql -u root -p using password from step 2
+
+From within Mariadb run the show database command.  Just looking to see that it runs
+       
+        From with Mariadb type exit
+
+### 3. Add Mariadb to the network
+   
+
+`docker network add mariadbctr`             - add mariadb to the network  OPTIONAL if you included the --network parameter with the mariadb installation you do not need to run this command
+
+`docker network inspect drupalnet`          - you should now see mariadb container assigned to a network address
+
+### 4.  Create Drupal Container
+   
+`docker pull drupal`
+
+`docker volume create drupal-sites`
+
+`docker run --rm -v drupal-sites:/temporary/sites drupal cp -aRT /var/www/html/sites /temporary/sites`
+
+`docker run --name some-drupal --network drupalnet -d \`
+
+`-v drupal-modules:/var/www/html/modules \`
+
+`-v drupal-profiles:/var/www/html/profiles \`
+
+`-v drupal-sites:/var/www/html/sites \`
+
+`-v drupal-themes:/var/www/html/themes \`
+
+        `-p 8080:80` \
+
+`drupal`
+
+`docker ps`                          - verify drupal container is running
+
+![image](https://user-images.githubusercontent.com/91958725/192811680-3e6f4d45-6dd8-4d20-ad72-406ff13e12ef.png)
+
+
+
+`Docker exec -it mariadbctr mysql -u root -p`      - verify that there is now a drupal database
+
+The exec command is like a shell in the container
+
+        -it mariadbctr   means run in interactive mode
+
+            Then normal mysql login of mysql -u root -p using password from step 2
+
+From within Mariadb run the show database command.  You should see drupal as a database
+       
+        From with Mariadb type exit
+
+![image](https://user-images.githubusercontent.com/91958725/192806817-d987caa5-011a-4a69-a7f4-9a3e9f00787b.png)
+
+`Docker network inspect drupalnet `              - check network to make sure mariadb and drupalnet are there
+
+![image](https://user-images.githubusercontent.com/91958725/192807426-40a4c41c-d4da-4278-a7f9-7fdc5d285027.png)
+
+### 6.  Configure Drupal
+
+On another server with a browser:
+
+`http://docker01:8080 `      - this should be your docker server with the port you specified in the docker run command or yaml file
+
+This will put you into the docker wizzard.  Continue through the wizzard to the set up database task
+
+      specify mariadb is being used (top radio button)
+
+      fill in container
+
+      select advanced settings
+
+      add in IP address of the drupal container
+
+      add access port of mariadb (likely 3306)
+
+##  docker compose alternate method
+
+### Ensure you created the network from step 1 above
+
+### 8.  Create directory for yaml file
+
+        from you ssh into docker
+   
+        `mkdir drupal`              - in your user directory
+
+         `cd drupal`
+
+### 9.  Create yaml file
+
+       ` vi docker-compose.yaml`
+
+        Add the following line exactly as written.  You can change passwords, users and container names
+
+     version: '3.1'
+     services:
+       drupalctr:
+         image: drupal
+         ports:
+           - 8080:80
+         volumes:
+           - /var/www/html/modules
+           - /var/www/html/profiles
+           - /var/www/html/themes
+           - /var/www/html/sites
+       network:
+       - drupalnet
+       restart: always
+
+       mariadbctr:
+          image: mariadb
+          environment:
+             MYSQL_DATABASE: drupal
+    MYSQL_USER: drupaluser
+    MYSQL_PASSWORD: mypassword
+    MYSQL_ROOT_PASSWORD: mypassword
+          ports:
+          - 3306:3306
+          network:
+          - drupalnet
+          restart: always
+
+Exit and save
+
+### 10.  Run Docker-composer   - note you must be in the same director as docker-composer.yaml
+
+`docker-compose pull
+
+`docker-compose up -d`
+
+`docker-composer ps`   - verify containers are running
+
+### Proceed back to step 6 above to configure drupal
+
+
+
+
+     
+
+
+
 
